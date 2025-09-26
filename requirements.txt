@@ -1,0 +1,15 @@
+# Flask web framework
+Flask==3.0.3
+Werkzeug==3.0.3
+Jinja2==3.1.4
+
+# Deep learning
+torch==2.2.2
+torchvision==0.17.2
+timm==1.0.9   # Hugging Face timm for ViT models
+
+# Image processing
+Pillow==10.3.0
+
+# Utilities
+numpy==1.26.4

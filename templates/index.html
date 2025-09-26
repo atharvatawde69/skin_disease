@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DermaScan – Skin Disease Classifier (ViT)</title>
+  <style>
+    :root {
+      --bg: oklch(99% 0.01 210);
+      --fg: oklch(22% 0.03 240);
+      --card: oklch(99.5% 0.005 210);
+      --muted: oklch(96.5% 0.015 220);
+      --border: oklch(92% 0.01 220);
+      --primary: oklch(70% 0.12 210);
+      --primary-fg: oklch(99% 0.01 210);
+      --ring: oklch(70% 0.12 210);
+      --success: oklch(75% 0.12 150);
+      --warning: oklch(78% 0.14 85);
+      --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: oklch(17% 0.02 240);
+        --fg: oklch(98% 0.01 240);
+        --card: oklch(20% 0.02 240 / 0.8);
+        --muted: oklch(24% 0.02 240);
+        --border: color-mix(in oklab, white 12%, transparent);
+        --primary: oklch(78% 0.13 210);
+        --primary-fg: oklch(16% 0.02 240);
+        --ring: oklch(78% 0.13 210);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Inter", ui-sans-serif, system-ui;
+      color: var(--fg);
+      background:
+        radial-gradient(1200px 600px at 5% -10%, color-mix(in oklab, var(--primary) 12%, transparent), transparent),
+        radial-gradient(1200px 600px at 110% 10%, color-mix(in oklab, var(--primary) 8%, transparent), transparent),
+        var(--bg);
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .wrapper {
+      min-height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(12px);
+      background: color-mix(in oklab, var(--bg) 85%, transparent);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo {
+      height: 40px; width: 40px;
+      display: grid; place-items: center;
+      border-radius: 12px;
+      background: color-mix(in oklab, var(--primary) 12%, transparent);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 30%, transparent);
+    }
+    .brand-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .brand-sub {
+      margin: 2px 0 0;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* Main */
+    .main { padding: 40px 20px 60px; }
+    .grid {
+      display: grid;
+      gap: 32px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 900px){
+      .grid { grid-template-columns: 1.2fr 1fr; align-items: center; }
+    }
+    .hero h1 {
+      margin: 0 0 16px 0;
+      font-size: clamp(30px, 3vw + 1rem, 46px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .hero p {
+      margin: 0 0 20px;
+      font-size: clamp(15px, 1.2vw + 0.6rem, 18px);
+      opacity: 0.85;
+    }
+    .pill {
+      display: inline-block;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-right: 6px;
+      transition: background 0.2s ease;
+    }
+    .pill:hover { background: color-mix(in oklab, var(--primary) 8%, var(--muted)); }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: 0 12px 40px color-mix(in oklab, black 8%, transparent);
+      backdrop-filter: blur(20px);
+      animation: fadeIn 0.9s ease;
+    }
+    .card h2 { margin: 0 0 12px; font-size: 20px; font-weight: 600; }
+
+    /* Upload */
+    .dropzone {
+      position: relative;
+      border: 2px dashed color-mix(in oklab, var(--ring) 60%, var(--border));
+      background: color-mix(in oklab, var(--primary) 5%, transparent);
+      padding: 20px;
+      border-radius: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .dropzone:hover {
+      border-color: var(--ring);
+      background: color-mix(in oklab, var(--primary) 10%, transparent);
+      transform: translateY(-2px);
+    }
+    .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .hint { font-size: 12px; opacity: 0.65; }
+
+    /* Button */
+    .btn {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-fg);
+      box-shadow: 0 6px 20px color-mix(in oklab, var(--primary) 30%, transparent);
+    }
+    .btn-primary:hover {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+    }
+
+    /* Result */
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 14px;
+      background: color-mix(in oklab, var(--success) 10%, var(--card));
+      border: 1px solid color-mix(in oklab, var(--success) 40%, var(--border));
+      animation: fadeIn 1s ease;
+    }
+    .result h3 { margin: 0 0 10px; font-size: 18px; }
+    .meta { font-size: 12px; opacity: 0.7; margin-top: 10px; }
+
+    img {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-top: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      padding: 14px 20px;
+      text-align: center;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="header">
+      <div class="container" style="display:flex;align-items:center;gap:12px;">
+        <div class="brand">
+          <div class="logo">🩺</div>
+          <div>
+            <p class="brand-title">DermaScan</p>
+            <p class="brand-sub">AI-assisted skin lesion analysis</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="container">
+        <div class="grid">
+          <section class="hero">
+            <h1>Early insights for healthier skin</h1>
+            <p>Upload a lesion photo to receive an instant, AI-powered preliminary assessment. Private, fast, and clear.</p>
+            <span class="pill">⚡ Fast results</span>
+            <span class="pill">🔒 Privacy-first</span>
+            <span class="pill">🎨 Medical-inspired UI</span>
+          </section>
+          <aside class="side-visual"></aside>
+        </div>
+
+        <section style="margin-top:32px;">
+          <div class="card">
+            <h2>Upload an Image</h2>
+            <form method="POST" enctype="multipart/form-data" class="upload">
+              <label class="dropzone">
+                <strong>Click to choose a skin image</strong>
+                <div class="hint">PNG, JPG up to ~10MB</div>
+                <input type="file" name="file" accept="image/*">
+              </label>
+
+              <div style="margin-top:16px;">
+                <input class="btn btn-primary" type="submit" value="🔍 Predict">
+              </div>
+
+              {% if prediction %}
+              <div class="result">
+                <h3>Prediction: {{ prediction }}</h3>
+                <img src="{{ img_path }}" alt="Uploaded Image">
+                <p class="meta">⚠️ This is an AI-assisted assessment, not a medical diagnosis.</p>
+              </div>
+              {% endif %}
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      Disclaimer: This tool is for educational purposes only. Always consult a healthcare professional for diagnosis or treatment.
+    </footer>
+  </div>
+</body>
+</html>
