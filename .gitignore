@@ -1,0 +1,26 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+
+# Virtual environment
+venv/
+.env/
+
+# PyTorch / model checkpoints
+*.pt
+*.pth
+
+# Static assets - keep CSS, ignore large media files
+static/*.png
+static/*.jpg
+static/*.jpeg
+static/*.gif
+static/*.svg
+static/*.webp
+
+# System files
+.DS_Store
+Thumbs.db
