@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DermaScan – Skin Disease Classifier (ViT)</title>
+  <title>DermaScan – Skin Disease Detection (ResNet)</title>
   <style>
     :root {
       --bg: oklch(99% 0.01 210);
@@ -200,6 +200,19 @@
       height: auto;
     }
 
+    .result.error {
+      background: color-mix(in oklab, var(--warning) 14%, var(--card));
+      border-color: color-mix(in oklab, var(--warning) 50%, var(--border));
+    }
+    .warn { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: oklch(55% 0.15 60); }
+    .bar-row { display: grid; grid-template-columns: 1fr 120px 52px; gap: 10px; align-items: center; margin: 6px 0; font-size: 13px; }
+    .bar { height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+    .bar-fill { display: block; height: 100%; background: var(--primary); }
+    .bar-value { text-align: right; font-variant-numeric: tabular-nums; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+    .pair figure { margin: 0; }
+    .pair figcaption { font-size: 12px; opacity: 0.7; margin-top: 6px; text-align: center; }
+
     /* Footer */
     .footer {
       border-top: 1px solid var(--border);
@@ -229,10 +242,10 @@
         <div class="grid">
           <section class="hero">
             <h1>Early insights for healthier skin</h1>
-            <p>Upload a lesion photo to receive an instant, AI-powered preliminary assessment. Private, fast, and clear.</p>
+            <p>Upload a dermoscopy image of a skin lesion to get an instant, AI-powered preliminary assessment, with a heatmap showing what the model looked at.</p>
             <span class="pill">⚡ Fast results</span>
-            <span class="pill">🔒 Privacy-first</span>
-            <span class="pill">🎨 Medical-inspired UI</span>
+            <span class="pill">🔒 Images are never stored</span>
+            <span class="pill">🔥 Grad-CAM explanation</span>
           </section>
           <aside class="side-visual"></aside>
         </div>
@@ -242,20 +255,46 @@
             <h2>Upload an Image</h2>
             <form method="POST" enctype="multipart/form-data" class="upload">
               <label class="dropzone">
-                <strong>Click to choose a skin image</strong>
-                <div class="hint">PNG, JPG up to ~10MB</div>
-                <input type="file" name="file" accept="image/*">
+                <strong id="file-label">Click to choose a skin image</strong>
+                <div class="hint">PNG or JPG up to 10MB. Trained on dermoscopy images (HAM10000), so ordinary phone photos may give unreliable results.</div>
+                <input type="file" name="file" accept="image/*" id="file-input">
               </label>
 
               <div style="margin-top:16px;">
                 <input class="btn btn-primary" type="submit" value="🔍 Predict">
               </div>
 
-              {% if prediction %}
+              {% if not model_ready %}
+              <div class="result error"><strong>Model not loaded.</strong> Train one with <code>notebooks/train.ipynb</code> and save it as <code>models/best.pt</code>.</div>
+              {% endif %}
+
+              {% if error %}
+              <div class="result error">{{ error }}</div>
+              {% endif %}
+
+              {% if result %}
               <div class="result">
-                <h3>Prediction: {{ prediction }}</h3>
-                <img src="{{ img_path }}" alt="Uploaded Image">
-                <p class="meta">⚠️ This is an AI-assisted assessment, not a medical diagnosis.</p>
+                <h3>Prediction: {{ result.top[0].name }} ({{ "%.1f"|format(result.top[0].prob * 100) }}%)</h3>
+                {% if result.low_conf %}
+                <p class="warn">Low confidence: the model is not sure about this image.</p>
+                {% endif %}
+                {% if result.top[0].attention %}
+                <p class="warn">This class is cancerous or pre-cancerous. Please have it checked by a dermatologist.</p>
+                {% endif %}
+
+                {% for t in result.top %}
+                <div class="bar-row">
+                  <span class="bar-label">{{ t.name }}</span>
+                  <span class="bar"><span class="bar-fill" style="width: {{ '%.1f'|format(t.prob * 100) }}%"></span></span>
+                  <span class="bar-value">{{ "%.1f"|format(t.prob * 100) }}%</span>
+                </div>
+                {% endfor %}
+
+                <div class="pair">
+                  <figure><img src="{{ result.image }}" alt="Uploaded image"><figcaption>Uploaded image</figcaption></figure>
+                  <figure><img src="{{ result.heatmap }}" alt="Grad-CAM heatmap"><figcaption>Grad-CAM: red = most influential</figcaption></figure>
+                </div>
+                <p class="meta">Model: {{ result.model }}. ⚠️ This is an AI-assisted assessment, not a medical diagnosis.</p>
               </div>
               {% endif %}
             </form>
@@ -268,5 +307,11 @@
       Disclaimer: This tool is for educational purposes only. Always consult a healthcare professional for diagnosis or treatment.
     </footer>
   </div>
+  <script>
+    // show the chosen file name inside the drop zone
+    document.getElementById("file-input").addEventListener("change", function () {
+      if (this.files.length) document.getElementById("file-label").textContent = this.files[0].name;
+    });
+  </script>
 </body>
 </html>

@@ -1,107 +1,101 @@
+"""DermaScan: Flask demo for the HAM10000 skin-lesion classifier (ResNet + Grad-CAM).
+
+Run:  python app.py        (needs models/best.pt, produced by notebooks/train.ipynb)
+Env:  MODEL_PATH, HOST (default 127.0.0.1), FLASK_DEBUG=1 for the dev reloader.
+"""
+import base64
+import io
 import os
-from flask import Flask, request, render_template
+import threading
+from pathlib import Path
+
+import numpy as np
 import torch
-import timm
-from PIL import Image
-from torchvision import transforms
+from flask import Flask, render_template, request
+from PIL import Image, UnidentifiedImageError
+from torchvision import transforms as T
 
-# Flask app
+from src.gradcam import GradCAM, overlay_cam
+from src.labels import CLASS_CODES, CLASS_NAMES, NEEDS_ATTENTION
+from src.models import build_model, gradcam_target_layer
+
+MODEL_PATH = os.environ.get("MODEL_PATH", "models/best.pt")
+LOW_CONFIDENCE = 0.5
+
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # reject uploads over 10 MB
 
-# Config
-MODEL_NAME = "vit_base_patch16_384"
-CHECKPOINT_PATH = "best.pt"
-IMG_SIZE = 384
-
-# Load model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Load checkpoint
-checkpoint = torch.load("best.pt", map_location="cpu")
-
-# Create model
-model = timm.create_model("vit_base_patch16_384", pretrained=False, num_classes=35)
-
-# Handle DDP-trained checkpoints (remove "module." prefix)
-state_dict = checkpoint["model"]
-new_state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
-
-model.load_state_dict(new_state_dict)
-model.eval()
+_lock = threading.Lock()  # Grad-CAM keeps hook state on the model, so one request at a time
 
 
-# Preprocessing
-transform = transforms.Compose([
-    transforms.Resize((IMG_SIZE, IMG_SIZE)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=(0.5, 0.5, 0.5),
-                         std=(0.5, 0.5, 0.5))
-])
+def load_model(path):
+    """Rebuild the network from the config stored inside the checkpoint."""
+    path = Path(path)
+    if not path.exists():
+        return None
+    ckpt = torch.load(path, map_location="cpu", weights_only=True)
+    cfg = ckpt["cfg"]
+    model = build_model(cfg["model"], pretrained=False, dropout=cfg["dropout"])
+    model.load_state_dict(ckpt["model"])
+    model.eval()
+    size = ckpt["img_size"]
+    return {
+        "name": cfg["model"],
+        "classes": ckpt["classes"],
+        "transform": T.Compose([T.Resize((size, size)), T.ToTensor(), T.Normalize(ckpt["mean"], ckpt["std"])]),
+        "cam": GradCAM(model, gradcam_target_layer(model)),
+    }
 
-# Your 35 classes
-CLASS_NAMES = [
-    'Acne And Rosacea Photos',
-    'Actinic Keratosis Basal Cell Carcinoma And Other Malignant Lesions',
-    'Atopic Dermatitis Photos',
-    'Ba  Cellulitis',
-    'Ba Impetigo',
-    'Benign',
-    'Bullous Disease Photos',
-    'Cellulitis Impetigo And Other Bacterial Infections',
-    'Eczema Photos',
-    'Exanthems And Drug Eruptions',
-    'Fu Athlete Foot',
-    'Fu Nail Fungus',
-    'Fu Ringworm',
-    'Hair Loss Photos Alopecia And Other Hair Diseases',
-    'Heathy',
-    'Herpes Hpv And Other Stds Photos',
-    'Light Diseases And Disorders Of Pigmentation',
-    'Lupus And Other Connective Tissue Diseases',
-    'Malignant',
-    'Melanoma Skin Cancer Nevi And Moles',
-    'Nail Fungus And Other Nail Disease',
-    'Pa Cutaneous Larva Migrans',
-    'Poison Ivy Photos And Other Contact Dermatitis',
-    'Psoriasis Pictures Lichen Planus And Related Diseases',
-    'Rashes',
-    'Scabies Lyme Disease And Other Infestations And Bites',
-    'Seborrheic Keratoses And Other Benign Tumors',
-    'Systemic Disease',
-    'Tinea Ringworm Candidiasis And Other Fungal Infections',
-    'Urticaria Hives',
-    'Vascular Tumors',
-    'Vasculitis Photos',
-    'Vi Chickenpox',
-    'Vi Shingles',
-    'Warts Molluscum And Other Viral Infections'
-]
+
+BUNDLE = load_model(MODEL_PATH)
+
+
+def to_data_uri(img: Image.Image) -> str:
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=90)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def analyse(image: Image.Image) -> dict:
+    x = BUNDLE["transform"](image).unsqueeze(0)
+    with _lock:
+        cam, _, probs = BUNDLE["cam"](x)
+
+    shown = image.copy()
+    shown.thumbnail((512, 512))
+    order = np.argsort(probs)[::-1][:3]
+    top = [{"code": BUNDLE["classes"][i], "name": CLASS_NAMES[BUNDLE["classes"][i]], "prob": float(probs[i]),
+            "attention": BUNDLE["classes"][i] in NEEDS_ATTENTION} for i in order]
+    return {"top": top, "low_conf": top[0]["prob"] < LOW_CONFIDENCE,
+            "image": to_data_uri(shown), "heatmap": to_data_uri(overlay_cam(shown, cam)), "model": BUNDLE["name"]}
+
+
+def page(**ctx):
+    return render_template("index.html", model_ready=BUNDLE is not None, **ctx)
+
+
+@app.errorhandler(413)
+def too_large(_):
+    return page(error="That file is larger than 10 MB."), 413
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    prediction = None
-    if request.method == "POST":
-        if "file" not in request.files:
-            return render_template("index.html", prediction="No file uploaded")
-        file = request.files["file"]
-        if file.filename == "":
-            return render_template("index.html", prediction="No file selected")
+    if request.method == "GET":
+        return page()
+    if BUNDLE is None:
+        return page(error="No trained model found. Train one with notebooks/train.ipynb and put it in models/best.pt.")
 
-        # Save and process image
-        img_path = os.path.join("static", file.filename)
-        file.save(img_path)
-        image = Image.open(img_path).convert("RGB")
-        input_tensor = transform(image).unsqueeze(0).to(device)
+    file = request.files.get("file")
+    if file is None or file.filename == "":
+        return page(error="Please choose an image first.")
+    try:
+        image = Image.open(file.stream).convert("RGB")
+    except (UnidentifiedImageError, OSError):
+        return page(error="That file is not a readable image (use PNG or JPG).")
 
-        # Run inference
-        with torch.no_grad():
-            outputs = model(input_tensor)
-            _, pred_idx = torch.max(outputs, 1)
-            prediction = CLASS_NAMES[pred_idx.item()]
+    return page(result=analyse(image))
 
-        return render_template("index.html", prediction=prediction, img_path=img_path)
-
-    return render_template("index.html", prediction=prediction)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host=os.environ.get("HOST", "127.0.0.1"), port=5000, debug=os.environ.get("FLASK_DEBUG") == "1")
