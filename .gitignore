@@ -31,3 +31,9 @@ Thumbs.db
 report/*.pdf
 report/page_numbers.json
 report/labels.json
+
+# Presentation: template copies, renders and the deck itself (the deck will hold names and the SDG)
+*.ppt
+*.pptx
+report/ppt_template/
+report/ppt_render/

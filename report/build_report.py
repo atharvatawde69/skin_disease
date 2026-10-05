@@ -38,36 +38,41 @@ BULLET = H.add_bullet_numbering(doc)
 refs_order = []
 REFS = {
     "esteva": 'A. Esteva, B. Kuprel, R. A. Novoa, J. Ko, S. M. Swetter, H. M. Blau and S. Thrun, "Dermatologist-level '
-              'classification of skin cancer with deep neural networks," Nature, vol. 542, no. 7639, pp. 115-118, 2017.',
+              'classification of skin cancer with deep neural networks," Nature, vol. 542, no. 7639, pp. 115-118, 2017, '
+              'doi: 10.1038/nature21056.',
     "tschandl": 'P. Tschandl, C. Rosendahl and H. Kittler, "The HAM10000 dataset, a large collection of multi-source '
-                'dermatoscopic images of common pigmented skin lesions," Scientific Data, vol. 5, Art. no. 180161, 2018.',
-    "kaggle": 'K. S. Mader, "Skin Cancer MNIST: HAM10000," Kaggle dataset. [Online]. Available: '
-              'https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000 (accessed Oct. 5, 2026).',
+                'dermatoscopic images of common pigmented skin lesions," Sci. Data, vol. 5, Art. no. 180161, 2018, '
+                'doi: 10.1038/sdata.2018.161.',
     "codella": 'N. Codella et al., "Skin lesion analysis toward melanoma detection 2018: A challenge hosted by the '
-               'International Skin Imaging Collaboration (ISIC)," arXiv:1902.03368, 2019.',
+               'International Skin Imaging Collaboration (ISIC)," arXiv:1902.03368, 2019. [Online]. Available: '
+               'https://arxiv.org/abs/1902.03368',
     "he": 'K. He, X. Zhang, S. Ren and J. Sun, "Deep residual learning for image recognition," in Proc. IEEE Conf. '
-          'Computer Vision and Pattern Recognition (CVPR), 2016, pp. 770-778.',
+          'Comput. Vis. Pattern Recognit. (CVPR), 2016, pp. 770-778, doi: 10.1109/CVPR.2016.90.',
     "deng": 'J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li and L. Fei-Fei, "ImageNet: A large-scale hierarchical image '
-            'database," in Proc. IEEE CVPR, 2009, pp. 248-255.',
+            'database," in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR), 2009, pp. 248-255, '
+            'doi: 10.1109/CVPR.2009.5206848.',
     "selvaraju": 'R. R. Selvaraju, M. Cogswell, A. Das, R. Vedantam, D. Parikh and D. Batra, "Grad-CAM: Visual '
-                 'explanations from deep networks via gradient-based localization," in Proc. IEEE Int. Conf. Computer '
-                 'Vision (ICCV), 2017, pp. 618-626.',
+                 'explanations from deep networks via gradient-based localization," in Proc. IEEE Int. Conf. Comput. '
+                 'Vis. (ICCV), 2017, pp. 618-626. [Online]. Available: '
+                 'https://openaccess.thecvf.com/content_iccv_2017/html/Selvaraju_Grad-CAM_Visual_Explanations_ICCV_2017_paper.html',
     "ioffe": 'S. Ioffe and C. Szegedy, "Batch normalization: Accelerating deep network training by reducing internal '
-             'covariate shift," in Proc. Int. Conf. Machine Learning (ICML), 2015, pp. 448-456.',
+             'covariate shift," in Proc. Int. Conf. Mach. Learn. (ICML), PMLR vol. 37, 2015, pp. 448-456. [Online]. '
+             'Available: https://proceedings.mlr.press/v37/ioffe15.html',
     "srivastava": 'N. Srivastava, G. Hinton, A. Krizhevsky, I. Sutskever and R. Salakhutdinov, "Dropout: A simple way to '
-                  'prevent neural networks from overfitting," J. Mach. Learn. Res., vol. 15, no. 56, pp. 1929-1958, 2014.',
-    "kingma": 'D. P. Kingma and J. Ba, "Adam: A method for stochastic optimization," in Proc. Int. Conf. Learning '
-              'Representations (ICLR), 2015 (arXiv:1412.6980).',
-    "tieleman": 'T. Tieleman and G. Hinton, "Lecture 6.5 - RMSProp: Divide the gradient by a running average of its '
-                'recent magnitude," COURSERA: Neural Networks for Machine Learning, 2012.',
-    "loshchilov": 'I. Loshchilov and F. Hutter, "SGDR: Stochastic gradient descent with warm restarts," in Proc. ICLR, '
-                  '2017 (arXiv:1608.03983).',
-    "micikevicius": 'P. Micikevicius et al., "Mixed precision training," in Proc. ICLR, 2018 (arXiv:1710.03740).',
-    "paszke": 'A. Paszke et al., "PyTorch: An imperative style, high-performance deep learning library," in Advances in '
-              'Neural Information Processing Systems 32 (NeurIPS), 2019.',
+                  'prevent neural networks from overfitting," J. Mach. Learn. Res., vol. 15, no. 56, pp. 1929-1958, '
+                  '2014. [Online]. Available: https://jmlr.org/papers/v15/srivastava14a.html',
+    "kingma": 'D. P. Kingma and J. Ba, "Adam: A method for stochastic optimization," in Proc. Int. Conf. Learn. '
+              'Represent. (ICLR), 2015. [Online]. Available: https://arxiv.org/abs/1412.6980',
+    "loshchilov": 'I. Loshchilov and F. Hutter, "SGDR: Stochastic gradient descent with warm restarts," in Proc. Int. '
+                  'Conf. Learn. Represent. (ICLR), 2017. [Online]. Available: https://arxiv.org/abs/1608.03983',
+    "micikevicius": 'P. Micikevicius et al., "Mixed precision training," in Proc. Int. Conf. Learn. Represent. (ICLR), '
+                    '2018. [Online]. Available: https://arxiv.org/abs/1710.03740',
+    "paszke": 'A. Paszke et al., "PyTorch: An imperative style, high-performance deep learning library," in Adv. Neural '
+              'Inf. Process. Syst. (NeurIPS), vol. 32, 2019. [Online]. Available: https://arxiv.org/abs/1912.01703',
     "pedregosa": 'F. Pedregosa et al., "Scikit-learn: Machine learning in Python," J. Mach. Learn. Res., vol. 12, '
-                 'pp. 2825-2830, 2011.',
-    "goodfellow": 'I. Goodfellow, Y. Bengio and A. Courville, Deep Learning. Cambridge, MA, USA: MIT Press, 2016.',
+                 'pp. 2825-2830, 2011. [Online]. Available: https://jmlr.org/papers/v12/pedregosa11a.html',
+    "goodfellow": 'I. Goodfellow, Y. Bengio and A. Courville, Deep Learning. Cambridge, MA, USA: MIT Press, 2016, '
+                  'ISBN 978-0-262-03561-3.',
 }
 
 
@@ -392,7 +397,7 @@ bullets([
 
 h2("1.4  Dataset")
 body("The experiments use the HAM10000 (“Human Against Machine with 10000 training images”) dataset "
-     + cite("tschandl") + ", obtained from its Kaggle mirror " + cite("kaggle") + ". It contains 10,015 dermoscopy "
+     + cite("tschandl") + ", downloaded from its Kaggle mirror (“Skin Cancer MNIST: HAM10000”). It contains 10,015 dermoscopy "
      "images of pigmented lesions collected over about twenty years at the Medical University of Vienna (Austria) and "
      "in a skin cancer practice in Queensland (Australia). More than half of the diagnoses were confirmed by "
      "histopathology and the rest by follow-up examination, expert consensus or confocal microscopy. The images are "
@@ -426,8 +431,8 @@ chapter("Chapter 2 Methodology")
 h2("2.1  Related Work")
 body("Deep learning for skin lesion analysis has developed quickly. Esteva et al. " + cite("esteva") + " fine-tuned an "
      "ImageNet-pretrained Inception network on about 129,000 clinical images and reported dermatologist-level "
-     "performance on two classification tasks, which made transfer learning the standard starting point for the "
-     "field. The International Skin Imaging Collaboration (ISIC) organises public challenges on lesion "
+     "performance on two binary classification tasks, which helped establish transfer learning as a common "
+     "starting point for the field. The International Skin Imaging Collaboration (ISIC) organises public challenges on lesion "
      "segmentation, attribute detection and diagnosis; the 2018 edition used HAM10000 as the training data of its "
      "diagnosis task " + cite("codella") + ", and the dataset has been widely used since.")
 body("Architecturally, the residual networks (ResNet) of He et al. " + cite("he") + " made very deep CNNs trainable by "
@@ -436,19 +441,28 @@ body("Architecturally, the residual networks (ResNet) of He et al. " + cite("he"
      "regularized by dropout " + cite("srivastava") + ". Grad-CAM " + cite("selvaraju") + " produces visual explanations "
      "from any CNN without changing its architecture, which is important when a prediction concerns health. "
      "Table 2.1 summarises the works most relevant to this project.")
-table(2, "Summary of related work",
-      ["Work", "Contribution", "Use in this project"],
-      [["Esteva et al., 2017 " + cite("esteva"), "CNN transfer learning reaches dermatologist-level skin lesion classification.",
-        "Motivation for fine-tuning a pretrained network."],
-       ["Tschandl et al., 2018 " + cite("tschandl"), "HAM10000: 10,015 dermoscopy images in 7 classes.", "The dataset used here."],
-       ["Codella et al., 2019 " + cite("codella"), "ISIC 2018 challenge on lesion segmentation, attributes and diagnosis.",
-        "Context and benchmark for the data."],
-       ["He et al., 2016 " + cite("he"), "Residual learning with skip connections for very deep networks.", "ResNet-18 backbone."],
-       ["Selvaraju et al., 2017 " + cite("selvaraju"), "Grad-CAM: gradient-based visual explanations.", "Heatmaps in the evaluation and in the web app."]],
-      [1.9, 2.9, 2.1], font_pt=10)
-body("Many published results report accuracy only, or split the data by image. This project differs in emphasis rather "
-     "than in novelty: it splits by lesion, reports balanced metrics and melanoma recall, studies the optimizer and "
-     "regularization choices in controlled experiments, and delivers the result as a usable and honest application.")
+table(2, "Literature survey: related work, techniques, datasets, key results and limitations",
+      ["Author & year", "Technique / method", "Dataset", "Key results", "Limitations"],
+      [["Esteva et al., 2017 " + cite("esteva"), "Deep CNN, transfer learning from ImageNet",
+        "129,450 clinical images, 2,032 diseases", "On par with 21 dermatologists on two binary tasks",
+        "Binary tasks only, not a seven-class problem"],
+       ["Tschandl et al., 2018 " + cite("tschandl"), "Dataset paper (no model)",
+        "HAM10000: 10,015 dermoscopy images, 7 classes", "Over 50% of diagnoses confirmed by biopsy",
+        "Several images per lesion; strong class imbalance"],
+       ["Codella et al., 2019 " + cite("codella"), "ISIC 2018 challenge: segmentation, attributes, classification",
+        "More than 12,500 images", "159 teams entered the classification task",
+        "Equal test scores can hide different generalisation"],
+       ["He et al., 2016 " + cite("he"), "Residual networks with shortcut connections", "ImageNet",
+        "3.57% error, 1st place ILSVRC 2015", "Built for natural images, not for lesions"],
+       ["Selvaraju et al., 2017 " + cite("selvaraju"), "Grad-CAM: gradient-based heatmaps", "ILSVRC-15 and others",
+        "Beat earlier methods at weakly supervised localisation", "Coarse localisation; shows where, not why"]],
+      [1.15, 1.45, 1.3, 1.5, 1.5], font_pt=9)
+body("The surveyed work shows strong results on benchmark data, and it also points to three gaps that matter for "
+     "this project: published models are often tested on binary tasks rather than all seven classes " + cite("esteva")
+     + ", the dataset contains several images of the same lesion and a heavy class imbalance " + cite("tschandl")
+     + ", and methods with the same test score can generalise differently " + cite("codella") + ". This project "
+     "addresses them by splitting the data by lesion, reporting balanced metrics and melanoma recall, being open "
+     "about its limits, and adding heatmaps and uncertainty warnings in a usable application.")
 
 h2("2.2  System Architecture / Block Diagram")
 body("Figure 2.1 shows the complete system. It has two pipelines connected by a trained checkpoint. The "
@@ -529,7 +543,7 @@ body("Four optimizers are compared (module 2.2). All minimise the loss by changi
      "gradient g of a mini-batch. __SGD__ updates θ ← θ − ηg. __SGD with momentum__ "
      "accumulates a velocity that smooths the direction and speeds up progress in consistent directions:", after=2)
 equation("vₜ = μvₜ₋₁ + gₜ ,   θ ← θ − ηvₜ", "2.5")
-body("__RMSProp__ " + cite("tieleman") + " divides the step by a running average of recent squared gradients, so that "
+body("__RMSProp__ (discussed in " + cite("kingma") + ") divides the step by a running average of recent squared gradients, so that "
      "each weight gets its own effective learning rate:", after=2)
 equation("sₜ = ρsₜ₋₁ + (1−ρ)gₜ² ,   θ ← θ − ηgₜ / (√sₜ + ε)", "2.6")
 body("__Adam__ " + cite("kingma") + " combines both ideas, keeping running averages of the gradient (first moment m) "
