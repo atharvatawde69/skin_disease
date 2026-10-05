@@ -26,3 +26,8 @@ Screenshot*.png
 # System files
 .DS_Store
 Thumbs.db
+
+# Report: PDF previews and generated helper files (the .docx is already ignored above)
+report/*.pdf
+report/page_numbers.json
+report/labels.json

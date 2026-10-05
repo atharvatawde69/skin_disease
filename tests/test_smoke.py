@@ -80,7 +80,7 @@ def test_training_gradcam_and_app(fake_data, tmp_path, monkeypatch):
     assert resp.status_code == 200 and "Most likely" in page and "Grad-CAM" in page
     # recommendation card, melanoma meter, heatmap slider and model card are rendered
     for text in ("What this means", "Suggested next steps", "Melanoma probability", "heat-slider",
-                 "About the model", "The ABCDE rule"):
+                 "About the model", "The ABCDE rule", "theme-toggle"):
         assert text in page, text
 
     bad = client.post("/", data={"file": (io.BytesIO(b"not an image"), "x.txt")}, content_type="multipart/form-data")

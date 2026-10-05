@@ -4,6 +4,39 @@
 
   var MAX_BYTES = 10 * 1024 * 1024;
 
+  // ---- light / dark theme: the page already has data-theme set (saved choice or system default) ----
+  var root = document.documentElement;
+  var toggle = document.getElementById("theme-toggle");
+  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function storedTheme() {
+    try { return localStorage.getItem("theme"); } catch (e) { return null; }
+  }
+
+  function describeToggle() {
+    var dark = root.getAttribute("data-theme") === "dark";
+    toggle.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+    toggle.setAttribute("title", dark ? "Switch to light theme" : "Switch to dark theme");
+  }
+
+  toggle.addEventListener("click", function () {
+    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("theme", next); } catch (e) { /* private mode: the choice just isn't remembered */ }
+    describeToggle();
+  });
+
+  // until the visitor makes a choice, keep following the system setting
+  if (media && media.addEventListener) {
+    media.addEventListener("change", function (event) {
+      if (!storedTheme()) {
+        root.setAttribute("data-theme", event.matches ? "dark" : "light");
+        describeToggle();
+      }
+    });
+  }
+  describeToggle();
+
   var form = document.getElementById("upload-form");
   var input = document.getElementById("file-input");
   var zone = document.getElementById("dropzone");
