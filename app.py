@@ -5,6 +5,7 @@ Env:  MODEL_PATH, HOST (default 127.0.0.1), FLASK_DEBUG=1 for the dev reloader.
 """
 import base64
 import io
+import json
 import os
 import threading
 from pathlib import Path
@@ -15,12 +16,16 @@ from flask import Flask, render_template, request
 from PIL import Image, UnidentifiedImageError
 from torchvision import transforms as T
 
-from src.gradcam import GradCAM, overlay_cam
-from src.labels import CLASS_CODES, CLASS_NAMES, NEEDS_ATTENTION
+from src.gradcam import GradCAM, heatmap_image
+from src.knowledge import CLASS_INFO, RISK_LABEL
+from src.labels import CLASS_NAMES
 from src.models import build_model, gradcam_target_layer
 
+ROOT = Path(__file__).parent
 MODEL_PATH = os.environ.get("MODEL_PATH", "models/best.pt")
-LOW_CONFIDENCE = 0.5
+LOW_CONFIDENCE = 0.5   # below this the model is unsure
+CLOSE_CALL = 0.15      # top-1 and top-2 closer than this is a toss-up
+MEL_HINT = 0.15        # show a melanoma warning above this probability even if another class ranks first
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # reject uploads over 10 MB
@@ -47,7 +52,14 @@ def load_model(path):
     }
 
 
+def load_model_card():
+    """Metrics shown in the 'About the model' panel (model_card.json next to this file)."""
+    path = ROOT / "model_card.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
 BUNDLE = load_model(MODEL_PATH)
+CARD = load_model_card()
 
 
 def to_data_uri(img: Image.Image) -> str:
@@ -61,17 +73,40 @@ def analyse(image: Image.Image) -> dict:
     with _lock:
         cam, _, probs = BUNDLE["cam"](x)
 
+    classes = BUNDLE["classes"]
     shown = image.copy()
     shown.thumbnail((512, 512))
     order = np.argsort(probs)[::-1][:3]
-    top = [{"code": BUNDLE["classes"][i], "name": CLASS_NAMES[BUNDLE["classes"][i]], "prob": float(probs[i]),
-            "attention": BUNDLE["classes"][i] in NEEDS_ATTENTION} for i in order]
-    return {"top": top, "low_conf": top[0]["prob"] < LOW_CONFIDENCE,
-            "image": to_data_uri(shown), "heatmap": to_data_uri(overlay_cam(shown, cam)), "model": BUNDLE["name"]}
+    top = [{"code": classes[i], "name": CLASS_NAMES[classes[i]], "prob": float(probs[i])} for i in order]
+
+    best = top[0]
+    info = CLASS_INFO[best["code"]]
+    mel_prob = float(probs[classes.index("mel")])
+    low_conf = best["prob"] < LOW_CONFIDENCE
+    mel_hint = best["code"] != "mel" and mel_prob >= MEL_HINT
+
+    # an unsure or melanoma-suspicious result must never carry a reassuring "harmless" badge
+    risk, risk_label = info["risk"], RISK_LABEL[info["risk"]]
+    if risk == "low" and (low_conf or mel_hint):
+        risk, risk_label = "medium", "Uncertain result: consider getting it checked"
+
+    return {
+        "top": top,
+        "info": info,
+        "risk": risk,
+        "risk_label": risk_label,
+        "mel_prob": mel_prob,
+        "low_conf": low_conf,
+        "close_call": top[1]["name"] if not low_conf and best["prob"] - top[1]["prob"] < CLOSE_CALL else None,
+        "mel_hint": mel_hint,
+        "image": to_data_uri(shown),
+        "heat": to_data_uri(heatmap_image(cam, shown.size)),
+        "model": BUNDLE["name"],
+    }
 
 
 def page(**ctx):
-    return render_template("index.html", model_ready=BUNDLE is not None, **ctx)
+    return render_template("index.html", model_ready=BUNDLE is not None, card=CARD, class_names=CLASS_NAMES, **ctx)
 
 
 @app.errorhandler(413)

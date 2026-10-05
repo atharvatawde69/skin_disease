@@ -1,0 +1,26 @@
+{
+  "model": "ResNet-18 pretrained on ImageNet, fine-tuned with the RMSProp optimizer",
+  "dataset": "HAM10000: 10,015 dermoscopy images of 7,470 lesions in 7 classes",
+  "split": "70% train, 15% validation, 15% test, split by lesion so no lesion appears in two sets",
+  "metrics": {
+    "accuracy": 0.7916,
+    "balanced_accuracy": 0.6925,
+    "macro_f1": 0.6815,
+    "melanoma_recall": 0.5893
+  },
+  "per_class_recall": {
+    "akiec": 0.63,
+    "bcc": 0.61,
+    "bkl": 0.70,
+    "df": 0.59,
+    "mel": 0.59,
+    "nv": 0.86,
+    "vasc": 0.86
+  },
+  "limitations": [
+    "Trained on dermoscopy images only. Ordinary phone photos can give unreliable results.",
+    "The test images come from the same clinics as the training images, so real-world accuracy is likely lower.",
+    "About 4 in 10 melanomas in the test set were missed, so a non-melanoma result is never a clearance.",
+    "Educational project. It is not a medical device and cannot diagnose anything."
+  ]
+}

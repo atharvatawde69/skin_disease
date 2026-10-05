@@ -43,9 +43,15 @@ class GradCAM:
         self._handle.remove()
 
 
+def heatmap_image(cam: np.ndarray, size: tuple[int, int]) -> Image.Image:
+    """The CAM as a colour image of the given (width, height), red = most influential."""
+    heat = Image.fromarray((cam * 255).astype(np.uint8)).resize(size, Image.BICUBIC)
+    colored = matplotlib.colormaps["jet"](np.asarray(heat) / 255.0)[..., :3]
+    return Image.fromarray((colored * 255).astype(np.uint8))
+
+
 def overlay_cam(image: Image.Image, cam: np.ndarray, alpha: float = 0.45) -> Image.Image:
     """Blend the heatmap over the original image."""
-    heat = Image.fromarray((cam * 255).astype(np.uint8)).resize(image.size, Image.BICUBIC)
-    colored = matplotlib.colormaps["jet"](np.asarray(heat) / 255.0)[..., :3]
+    colored = np.asarray(heatmap_image(cam, image.size)) / 255.0
     blended = (1 - alpha) * np.asarray(image.convert("RGB")) / 255.0 + alpha * colored
     return Image.fromarray((blended.clip(0, 1) * 255).astype(np.uint8))

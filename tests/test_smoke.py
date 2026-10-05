@@ -77,7 +77,11 @@ def test_training_gradcam_and_app(fake_data, tmp_path, monkeypatch):
     buf.seek(0)
     resp = client.post("/", data={"file": (buf, "lesion.png")}, content_type="multipart/form-data")
     page = resp.get_data(as_text=True)
-    assert resp.status_code == 200 and "Prediction:" in page and "Grad-CAM" in page
+    assert resp.status_code == 200 and "Most likely" in page and "Grad-CAM" in page
+    # recommendation card, melanoma meter, heatmap slider and model card are rendered
+    for text in ("What this means", "Suggested next steps", "Melanoma probability", "heat-slider",
+                 "About the model", "The ABCDE rule"):
+        assert text in page, text
 
     bad = client.post("/", data={"file": (io.BytesIO(b"not an image"), "x.txt")}, content_type="multipart/form-data")
     assert "not a readable image" in bad.get_data(as_text=True)
